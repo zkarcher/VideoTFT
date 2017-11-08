@@ -1,6 +1,7 @@
 #include <SD.h>
 #include <SPI.h>
-#include "ILI9341_t3.h"
+//#include "ILI9341_t3.h"
+#include "ILI9341_t3DMA.h"
 
 // Use these with the Teensy 3.5 & 3.6 SD card
 #define SDCARD_CS_PIN    BUILTIN_SDCARD
@@ -12,38 +13,59 @@
 #define BITS_PP    (16)
 #define BYTES_PP   (BITS_PP / 8)
 
-// TFT pins
-const uint8_t TFT_DC = 9;
-const uint8_t TFT_CS = 10;
-ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
-//ILI9341_t3(uint8_t _CS, uint8_t _DC, uint8_t _RST = 255, uint8_t _MOSI=11, uint8_t _SCLK=13, uint8_t _MISO=12);
+#define TFT_DC      9 // 15
+#define TFT_CS      10
+#define TFT_RST     4  // 255 = unused, connect to 3.3V
+#define TFT_MOSI    11
+#define TFT_SCLK    13
+#define TFT_MISO    12
+
+//ILI9341_t3 tft_slow = ILI9341_t3(TFT_CS, TFT_DC);
+
+ILI9341_t3DMA tft = ILI9341_t3DMA(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCLK, TFT_MISO);
 
 Sd2Card card;
 SdVolume volume;
 File f1;
+
+/*
 uint8_t buffer[V_WIDTH * V_HEIGHT * BYTES_PP];
 uint16_t * buffer16 = (uint16_t *)buffer;	// 16-bit color array cast
+*/
 
 void setup() {
 	// Fill the buffer with red snow
-	for (uint32_t i = 0; i < V_WIDTH * V_HEIGHT; i++) {
-		buffer16[i] = random(0b11111) << 11;
+	for (uint16_t x = 0; x < V_WIDTH; x++) {
+		for (uint16_t y = 0; y < V_HEIGHT; y++) {
+			tft.drawPixel(x, y, random(0b11111) << 11);
+		}
 	}
 
   // wait for the Arduino Serial Monitor to open
+	Serial.begin(115200);
   while (!Serial) ;
   delay(50);
 
 	bool status = initSDCard();
 	if (!status) return;
 
+	/*
+	Serial.println("tft.begin();");
+	tft.fillRect(0, 0, tft.width(), tft.height(), 0x001F);
+	*/
+
 	Serial.println("tft.begin();");
 	tft.begin();
+
+	// Start DMA mode
+	tft.refresh();
+
+	tft.fillRect(0, 0, tft.width(), tft.height(), 0x001F);
 
 	Serial.println();
 	Serial.println("Reading SDTEST1.WAV:");
 
-	const uint16_t FRAME_BYTES = 0x7fff;	// .read size is limited to uint16_t
+	const uint16_t FRAME_BYTES = 58112;//0x1fff;	// .read size is limited to uint16_t
 	const uint16_t FRAME_COUNT = 30 * 5;	// 30fps, 10 seconds?
 	const uint32_t TOTAL_BYTES = FRAME_BYTES * FRAME_COUNT;
 
@@ -54,19 +76,19 @@ void setup() {
 
 	unsigned long start = millis();
 
+	uint8_t * screen8 = tft.getScreen8();
+
 	for (uint16_t f = 0; f < FRAME_COUNT; f++) {
 		// Read in 0xffff-byte chunks?
-		/*
-		for (uint32_t c = 0; c < FRAME_PIXELS; c += 0xffff) {
-			f1.read(&buffer[c], (uint16_t)min(0xffff, FRAME_PIXELS - c));
+		for (uint32_t c = 0; c < FRAME_BYTES; c += 0xffff) {
+			f1.read(screen8, (uint16_t)min(0xffff, FRAME_BYTES - c));
 		}
-		*/
 
-		f1.read(buffer, FRAME_BYTES);
+		//f1.read(buffer, FRAME_BYTES);
 
 		// Blast this data onto the screen
 		//tft.writeRect(0, 0, V_WIDTH, V_HEIGHT, buffer16);
-		tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[512], buffer16);
+		//tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[512], buffer16);
 	}
 
 	unsigned long end = millis();
@@ -109,6 +131,7 @@ void loop(void) {
 	uint16_t color = random(0xffff);
 
   tft.fillRect(min(x0,x1), min(y0,y1), abs(x0-x1), abs(y0-y1), color);
+	//tft.refreshOnce();
 
 	delay(3000);
 }
