@@ -40,13 +40,6 @@ uint8_t buffer[FRAME_BYTES];
 uint16_t * buffer16 = (uint16_t *)(&buffer[0]);
 
 void setup() {
-	// Fill the buffer with red snow
-	for (uint16_t x = 0; x < V_WIDTH; x++) {
-		for (uint16_t y = 0; y < V_HEIGHT; y++) {
-			tft.drawPixel(x, y, random(0b11111) << 11);
-		}
-	}
-
   // wait for the Arduino Serial Monitor to open
 	Serial.begin(115200);
   while (!Serial) ;
@@ -66,7 +59,20 @@ void setup() {
 	// Start DMA mode
 	tft.refresh();
 
-	tft.fillRect(0, 0, tft.width(), tft.height(), 0x001F);
+	//tft.fillRect(0, 0, tft.width(), tft.height(), 0x001F);
+
+	// Fill the buffer with red snow
+	for (uint16_t x = 0; x < V_WIDTH; x++) {
+		for (uint16_t y = 0; y < V_HEIGHT; y++) {
+			tft.drawPixel(x, y, random(0b11111) << 11);
+		}
+	}
+
+	/*
+	delay(500);
+	tft.stopRefresh();
+	delay(500);
+	*/
 
 	Serial.println();
 	Serial.println("Reading " VIDEO_BIN " :");
@@ -92,6 +98,12 @@ void loop(void) {
 		f1.read(buffer, FRAME_BYTES);
 
 		tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[PAL_COLORS * 2], buffer16);
+
+		if ((f % 20) == 9) {
+			tft.stopRefresh();
+		} else if ((f % 20) == 19) {
+			tft.refresh();
+		}
 	}
 
 	unsigned long end = millis();
