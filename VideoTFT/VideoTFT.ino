@@ -2,6 +2,7 @@
 #include <SPI.h>
 //#include "ILI9341_t3.h"
 #include "ILI9341_t3DMA.h"
+#include "title.h"
 
 #define VIDEO_BIN  "VIDEO.BIN"
 
@@ -62,11 +63,13 @@ void setup() {
 	//tft.fillRect(0, 0, tft.width(), tft.height(), 0x001F);
 
 	// Fill the buffer with red snow
-	for (uint16_t x = 0; x < V_WIDTH; x++) {
-		for (uint16_t y = 0; y < V_HEIGHT; y++) {
-			tft.drawPixel(x, y, random(0b11111) << 11);
+	for (uint16_t x = 0; x < tft.width(); x++) {
+		for (uint16_t y = 0; y < tft.height(); y++) {
+			tft.ddrawPixel(x, y, random(0b11111) << 11);
 		}
 	}
+
+	tft.dwriteRect8BPP(0, 0, 60, V_WIDTH, &title[PAL_COLORS * 2], (uint16_t *)title);
 
 	/*
 	delay(500);
@@ -97,13 +100,18 @@ void loop(void) {
 		// Read in 0xffff-byte chunks?
 		f1.read(buffer, FRAME_BYTES);
 
-		tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[PAL_COLORS * 2], buffer16);
+		tft.wait();
+		tft.dwriteRect8BPP(60, 0, V_HEIGHT, V_WIDTH, &buffer[PAL_COLORS * 2], buffer16);
 
+		//tft.refreshOnce();	// Slow & flickery :(
+
+		/*
 		if ((f % 20) == 9) {
 			tft.stopRefresh();
 		} else if ((f % 20) == 19) {
 			tft.refresh();
 		}
+		*/
 	}
 
 	unsigned long end = millis();

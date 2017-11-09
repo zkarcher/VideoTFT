@@ -20,6 +20,7 @@ _.each(dir_items, function(item){
 
 // Test: Truncate frames for quick dev cycles
 //items = items.slice(0,10);
+//items = items.slice(0,400);
 
 var gif_count = 0;
 var data = _.range(items.length);
@@ -65,9 +66,12 @@ function processPng(src, dest, index)
 					ar[c_index * 2 + 1] = (rgb565 & 0xff00) >> 8;
 				}
 
-				// Image data
-				for (var p = 0; p < pxs.length; p++) {
-					ar[256 * 2 + p] = pxs[p];
+				// Image data: Rearrange to the proper order
+				var offset = 512;
+				for (x = 0; x < 320; x++) {
+					for (y = 179; y >= 0; y--) {
+						ar[offset++] = pxs[y * 320 + x];
+					}
 				}
 
 				data[index] = ar;
