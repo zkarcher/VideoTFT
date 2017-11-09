@@ -3,6 +3,8 @@
 //#include "ILI9341_t3.h"
 #include "ILI9341_t3DMA.h"
 
+#define VIDEO_BIN  "VIDEO.BIN"
+
 // Use these with the Teensy 3.5 & 3.6 SD card
 #define SDCARD_CS_PIN    BUILTIN_SDCARD
 //#define SDCARD_MOSI_PIN  11  // not actually used
@@ -22,8 +24,8 @@
 
 const uint16_t PAL_COLORS = 256;	// of 2 bytes each: RGB565
 const uint16_t FRAME_BYTES = (PAL_COLORS * 2) + (V_WIDTH * V_HEIGHT);
-const uint16_t FRAME_COUNT = 30 * 5;	// 30fps, 10 seconds?
-const uint32_t TOTAL_BYTES = FRAME_BYTES * FRAME_COUNT;
+//const uint16_t FRAME_COUNT = 30 * 5;	// 30fps, 10 seconds?
+//const uint32_t TOTAL_BYTES = FRAME_BYTES * FRAME_COUNT;
 
 //ILI9341_t3 tft_slow = ILI9341_t3(TFT_CS, TFT_DC);
 
@@ -32,6 +34,7 @@ ILI9341_t3DMA tft = ILI9341_t3DMA(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCLK, T
 Sd2Card card;
 SdVolume volume;
 File f1;
+uint32_t frame_count;
 
 uint8_t buffer[FRAME_BYTES];
 uint16_t * buffer16 = (uint16_t *)(&buffer[0]);
@@ -66,28 +69,29 @@ void setup() {
 	tft.fillRect(0, 0, tft.width(), tft.height(), 0x001F);
 
 	Serial.println();
-	Serial.println("Reading SDTEST1.WAV:");
+	Serial.println("Reading " VIDEO_BIN " :");
 
-	if (f1.size() < TOTAL_BYTES) {
-		Serial.println("f1 is too small for speed testing");
-		return;
-	}
+	// Read the header: A single uint32_t, contains number of frames
+	uint8_t count[4];
+	f1.read(count, 4);
 
+	uint32_t * count32 = (uint32_t *)count;
+	frame_count = *count32;
+	Serial.print("frame_count: ");
+	Serial.println(frame_count);
+	delay(50);
+}
+
+void loop(void) {
 	unsigned long start = millis();
 
-	//uint8_t * screen8 = tft.getScreen8();
+	f1.seek(4);
 
-	for (uint16_t f = 0; f < FRAME_COUNT; f++) {
+	for (uint32_t f = 0; f < frame_count; f++) {
 		// Read in 0xffff-byte chunks?
 		f1.read(buffer, FRAME_BYTES);
 
 		tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[PAL_COLORS * 2], buffer16);
-
-		//f1.read(buffer, FRAME_BYTES);
-
-		// Blast this data onto the screen
-		//tft.writeRect(0, 0, V_WIDTH, V_HEIGHT, buffer16);
-		//tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[512], buffer16);
 	}
 
 	unsigned long end = millis();
@@ -102,24 +106,20 @@ void setup() {
 	Serial.println(V_HEIGHT);
 	Serial.print("  FRAME_BYTES:  ");
 	Serial.println(FRAME_BYTES);
-	Serial.print("  FRAME_COUNT:  ");
-	Serial.println(FRAME_COUNT);
-	Serial.print("  TOTAL_BYTES:  ");
-	Serial.println(TOTAL_BYTES);
+	Serial.print("  frame_count:  ");
+	Serial.println(frame_count);
 	Serial.print("  millis total: ");
 	Serial.println(end - start);
 	Serial.print("  millis per frame: ");
-	Serial.println((end - start) / FRAME_COUNT);
+	Serial.println((end - start) / frame_count);
 	Serial.print("  FPS:            : ");
-	Serial.print( FRAME_COUNT / ((end - start) / 1000.0f) );
+	Serial.print( frame_count / ((end - start) / 1000.0f) );
 
-	Serial.println("\nDone!");
+	Serial.println("      Done!\n");
 }
 
-
-void loop(void) {
+void loop_test(void) {
 	//void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-
 	uint16_t w = tft.width();
   uint16_t h = tft.height();
 
@@ -193,11 +193,11 @@ bool initSDCard()
 	}
 
 	// Open the 4 sample files.  Hopefully they're on the card
-	f1 = SD.open("SDTEST1.WAV");
+	f1 = SD.open(VIDEO_BIN);
 
 	// Speed test reading a single file
 	if (!f1) {
-		Serial.println("Unable to find SDTEST1.WAV on this card");
+		Serial.println("Unable to find " VIDEO_BIN " on this card");
 		return false;
 	}
 

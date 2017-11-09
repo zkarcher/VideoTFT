@@ -9,9 +9,11 @@
   "author": "zkarcher",
   "license": "ISC",
   "dependencies": {
+    "cpus": "^1.0.0",
     "fs": "0.0.1-security",
     "gifencoder": "^1.1.0",
     "png-file-stream": "^1.0.0",
+    "underscore": "^1.8.3",
     "webworker-threads": "^0.7.13"
   }
 }

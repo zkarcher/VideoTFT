@@ -1,4 +1,5 @@
 node/img/png/*
 node/img/gif/*
 node/img/video/*
+node/img/VIDEO.BIN
 node/package-lock.json
