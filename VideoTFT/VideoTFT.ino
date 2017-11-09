@@ -130,7 +130,6 @@ void loop(void) {
 	uint16_t color = random(0xffff);
 
   tft.fillRect(min(x0,x1), min(y0,y1), abs(x0-x1), abs(y0-y1), color);
-	//tft.refreshOnce();
 
 	delay(3000);
 }

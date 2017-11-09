@@ -1,0 +1,17 @@
+{
+  "name": "videotft",
+  "version": "1.0.0",
+  "description": "VideoTFT processing script",
+  "main": "main.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "zkarcher",
+  "license": "ISC",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "gifencoder": "^1.1.0",
+    "png-file-stream": "^1.0.0",
+    "webworker-threads": "^0.7.13"
+  }
+}
