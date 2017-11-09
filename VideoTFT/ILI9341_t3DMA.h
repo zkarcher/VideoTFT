@@ -201,6 +201,7 @@ class ILI9341_t3DMA : public Print
 	void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
 	void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color); // fill a rectangle
 	void writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors);
+	void writeRect8BPP(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *plookups, const uint16_t *palette);	// ZKA
 	void writeRectScale(int16_t x, int16_t y, int16_t orig_w, int16_t orig_h, int16_t dest_w, int16_t dest_h, const uint16_t *pcolors);
 
 	void drawRotChar(unsigned char c, bool compress);

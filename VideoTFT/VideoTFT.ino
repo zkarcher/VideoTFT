@@ -8,8 +8,8 @@
 //#define SDCARD_MOSI_PIN  11  // not actually used
 //#define SDCARD_SCK_PIN   13  // not actually used
 
-#define V_WIDTH    (180)
-#define V_HEIGHT   (320)
+#define V_WIDTH    (320)
+#define V_HEIGHT   (180)
 #define BITS_PP    (16)
 #define BYTES_PP   (BITS_PP / 8)
 
@@ -20,6 +20,11 @@
 #define TFT_SCLK    13
 #define TFT_MISO    12
 
+const uint16_t PAL_COLORS = 256;	// of 2 bytes each: RGB565
+const uint16_t FRAME_BYTES = (PAL_COLORS * 2) + (V_WIDTH * V_HEIGHT);
+const uint16_t FRAME_COUNT = 30 * 5;	// 30fps, 10 seconds?
+const uint32_t TOTAL_BYTES = FRAME_BYTES * FRAME_COUNT;
+
 //ILI9341_t3 tft_slow = ILI9341_t3(TFT_CS, TFT_DC);
 
 ILI9341_t3DMA tft = ILI9341_t3DMA(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCLK, TFT_MISO);
@@ -28,10 +33,8 @@ Sd2Card card;
 SdVolume volume;
 File f1;
 
-/*
-uint8_t buffer[V_WIDTH * V_HEIGHT * BYTES_PP];
-uint16_t * buffer16 = (uint16_t *)buffer;	// 16-bit color array cast
-*/
+uint8_t buffer[FRAME_BYTES];
+uint16_t * buffer16 = (uint16_t *)(&buffer[0]);
 
 void setup() {
 	// Fill the buffer with red snow
@@ -65,10 +68,6 @@ void setup() {
 	Serial.println();
 	Serial.println("Reading SDTEST1.WAV:");
 
-	const uint16_t FRAME_BYTES = 58112;//0x1fff;	// .read size is limited to uint16_t
-	const uint16_t FRAME_COUNT = 30 * 5;	// 30fps, 10 seconds?
-	const uint32_t TOTAL_BYTES = FRAME_BYTES * FRAME_COUNT;
-
 	if (f1.size() < TOTAL_BYTES) {
 		Serial.println("f1 is too small for speed testing");
 		return;
@@ -76,13 +75,13 @@ void setup() {
 
 	unsigned long start = millis();
 
-	uint8_t * screen8 = tft.getScreen8();
+	//uint8_t * screen8 = tft.getScreen8();
 
 	for (uint16_t f = 0; f < FRAME_COUNT; f++) {
 		// Read in 0xffff-byte chunks?
-		for (uint32_t c = 0; c < FRAME_BYTES; c += 0xffff) {
-			f1.read(screen8, (uint16_t)min(0xffff, FRAME_BYTES - c));
-		}
+		f1.read(buffer, FRAME_BYTES);
+
+		tft.writeRect8BPP(0, 0, V_WIDTH, V_HEIGHT, &buffer[PAL_COLORS * 2], buffer16);
 
 		//f1.read(buffer, FRAME_BYTES);
 

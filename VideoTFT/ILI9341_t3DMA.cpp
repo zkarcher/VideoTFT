@@ -532,6 +532,15 @@ void ILI9341_t3DMA::writeRect(int16_t x, int16_t y, int16_t w, int16_t h, const 
         }
 };
 
+void ILI9341_t3DMA::writeRect8BPP(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t *plookups, const uint16_t *palette)
+{
+	for (int16_t i = 0; i < w; i++) {
+		for (int16_t j = 0; j < h; j++) {
+			screen[y + j][x + i] = palette[plookups[(j * w) + i]];
+		}
+	}
+};
+
 void ILI9341_t3DMA::writeRectScale(int16_t x, int16_t y, int16_t orig_w, int16_t orig_h, int16_t dest_w, int16_t dest_h, const uint16_t *pcolors) {
     for (int i=0; i<dest_w; i++)
         for (int j=0; j<dest_h; j++) {
