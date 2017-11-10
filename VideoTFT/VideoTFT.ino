@@ -43,11 +43,27 @@ uint16_t * buffer16 = (uint16_t *)(&buffer[0]);
 void setup() {
   // wait for the Arduino Serial Monitor to open
 	Serial.begin(115200);
-  while (!Serial) ;
-  delay(50);
+
+	// Connected to battery pack: Never establishes a Serial connection?
+  //while (!Serial) ;
+
+	delay(50);
 
 	bool status = initSDCard();
 	if (!status) return;
+
+	Serial.println();
+	Serial.println("Reading " VIDEO_BIN " :");
+
+	// Read the header: A single uint32_t, contains number of frames
+	uint8_t count[4];
+	f1.read(count, 4);
+
+	uint32_t * count32 = (uint32_t *)count;
+	frame_count = *count32;
+	Serial.print("frame_count: ");
+	Serial.println(frame_count);
+	delay(50);
 
 	/*
 	Serial.println("tft.begin();");
@@ -76,19 +92,6 @@ void setup() {
 	tft.stopRefresh();
 	delay(500);
 	*/
-
-	Serial.println();
-	Serial.println("Reading " VIDEO_BIN " :");
-
-	// Read the header: A single uint32_t, contains number of frames
-	uint8_t count[4];
-	f1.read(count, 4);
-
-	uint32_t * count32 = (uint32_t *)count;
-	frame_count = *count32;
-	Serial.print("frame_count: ");
-	Serial.println(frame_count);
-	delay(50);
 }
 
 void loop(void) {
